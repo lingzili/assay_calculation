@@ -33,4 +33,4 @@ write.csv(Ins_Spl_v2, "data/Ins_Spl_v2.csv")
 Ins_Cal$Avg <- apply(Ins_Cal[, 3:9], 1, mean)
 
 # Save wrangled file
-write.csv(Ins_Cal, "data/Ins_Ins_v2.csv")
+write.csv(Ins_Cal, "data/Ins_Cal_v2.csv")
