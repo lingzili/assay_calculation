@@ -11,6 +11,8 @@ lines(spline(Ins_Cal$Avg, Ins_Cal$Insulin), col = "red", lwd = 3)
 
 # Create a new function out of splinefun
 func <- splinefun(x = Ins_Cal$Avg, y = Ins_Cal$Insulin, method = "fmm", ties = mean)
+lines(Ins_Cal$Avg, func(Ins_Cal$Avg, deriv = 0), lwd=2, col="black")
+
 
 # Interpolate insulin value
 Ins_Spl_v3 <- Ins_Spl_v2 %>% mutate(spline_Ins = func(Ins_Spl_v2$OD450))
