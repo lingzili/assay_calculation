@@ -1,8 +1,67 @@
-# Cubic spline regression -------------------------------------------------
+# Calculate calibration curve ---------------------------------------------
+# Plot calibrator curve
+plot(Ins_Cal$Insulin, Ins_Cal$Avg,
+  col = "darkblue",
+  xlab = "Insulin µg/L", ylab = "Calibrator OD450",
+  xlim = c(0.1, 10), ylim = c(0.01, 5),
+  log = "xy", las = 1)
+
+# Add regression fitting line
+lines(spline(Ins_Cal$Insulin, Ins_Cal$Avg), col = "red", lwd = 3)
+
+# Create a new function out of splinefun
+func <- splinefun(x = Ins_Cal$Avg, y = Ins_Cal$Insulin, method = "natural")
+
+# Interpolate insulin value
+Ins_Conc_v3 <- Ins_Conc_v2 %>% mutate(Insulin = func(Ins_Conc_v2$OD450))
+
+# Plot ontop
+points(Ins_Conc_v3$Insulin, Ins_Conc_v3$OD450, pch = 1, cex = 0.5, col = "black")
+
+
+
+
+
+
+p <- plm(Insulin ~ OD450, data = Ins_Conc_v3, model = func)
+
+
+
+
+r.squared(p)
+
+r.squared(object, model = NULL, type = c("cor", "rss", "ess"), dfcor = FALSE)
+
+
+# Multiply dilution factor
+Ins_Spl_v2 <- Ins_Spl_v2 %>%
+  mutate(Dil_Ins = if_else(Minute >= 32, Insulin * 20, Insulin * 5))
+
+# Multiply volume to get insulin ng per min
+Ins_Spl_v2 <- Ins_Spl_v2 %>%
+  mutate(Insulin_ng = Dil_Ins * Vol.per.well.ml)
+
+# Add glucose value to data set
+Ins_Spl_v2 <- Ins_Spl_v2 %>%
+  mutate(Group = if_else(Minute <= 4, "1mM",
+    if_else(Minute <= 17, "6mM",
+      if_else(Minute <= 32, "20mM", "KCl")
+    )
+  ))
+
+# Save calculated file
+write.csv(Ins_Spl_v2, "data/Ins_Spl_v4.csv")
+Ins_Spl_v3 <- Ins_Spl_v2
+
+Ins_Spl_v3$ID <- as.character(Ins_Spl_v3$ID)
+
+
+
 # Plot calibrator curve
 plot(Ins_Cal$Avg, Ins_Cal$Insulin,
   col = "darkblue",
-  xlim = c(0, 2.5), ylim = c(0, 8),
+  log = "xy",
+  xlim = c(0.05, 5), ylim = c(0.1, 10), las = 1,
   xlab = "Calibrator OD450", ylab = "Insulin µg/L"
 )
 
@@ -11,7 +70,7 @@ lines(spline(Ins_Cal$Avg, Ins_Cal$Insulin), col = "red", lwd = 3)
 
 # Create a new function out of splinefun
 func <- splinefun(x = Ins_Cal$Avg, y = Ins_Cal$Insulin, method = "fmm", ties = mean)
-lines(Ins_Cal$Avg, func(Ins_Cal$Avg, deriv = 0), lwd=2, col="black")
+lines(Ins_Cal$Avg, func(Ins_Cal$Avg, deriv = 0), lwd = 2, col = "black")
 
 
 # Interpolate insulin value
@@ -89,5 +148,6 @@ SI_index_v2 <- SI_index_v2 %>%
 # Save SI index file
 write.csv(SI_index_v2, "data/SI_index_v2.csv")
 
+# Create a new function out of splinefun
+func <- splinefun(x = Ins_Cal$Avg, y = Ins_Cal$Insulin, method = "fmm", ties = mean)
 # AUC ---------------------------------------------------------------------
-
