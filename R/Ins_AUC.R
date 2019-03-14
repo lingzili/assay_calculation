@@ -1,93 +1,49 @@
-# Cubic spline regression -------------------------------------------------
-# Plot calibrator curve
-plot(Ins_Cal$Avg, Ins_Cal$Insulin,
-  col = "darkblue",
-  xlim = c(0, 2.5), ylim = c(0, 8),
-  xlab = "Calibrator OD450", ylab = "Insulin µg/L"
-)
+# Calculate area under the curve
+AUC_index <- Ins_rm_1493_1483 %>%
+  group_by(ID, Glucose) %>%
+  summarise(AUC = AUC(y = Insulin_ng, x = Minute))
 
-# Add regression fitting line
-lines(spline(Ins_Cal$Avg, Ins_Cal$Insulin), col = "red", lwd = 3)
+View(AUC_index)
 
-# Create a new function out of splinefun
-func <- splinefun(x = Ins_Cal$Avg, y = Ins_Cal$Insulin, method = "fmm", ties = mean)
-lines(Ins_Cal$Avg, func(Ins_Cal$Avg, deriv = 0), lwd=2, col="black")
+AUC_index <- as.data.frame(AUC_index)
 
+# Add Diet to AUC data set
+AUC_index <- merge(AUC_index, df_Diet_ID_v2[, c("ID", "Diet")], by = "ID")
 
-# Interpolate insulin value
-Ins_Spl_v3 <- Ins_Spl_v2 %>% mutate(spline_Ins = func(Ins_Spl_v2$OD450))
+write.csv(AUC_index, "data/AUC_index.csv")
 
-View(Ins_Spl_v3)
+# Boxplot with points
+p <- AUC_index %>%
+  ggplot(aes(x = Diet, y = AUC, group = Diet, fill = Diet))
 
-# Plot samples OD450 against interpolated insulin value
-plot(Ins_Spl_v3$OD450, Ins_Spl_v3$spline_Ins,
-  col = "black",
-  xlim = c(0, 2.5), ylim = c(0, 8),
-  xlab = "Sample OD450", ylab = "Insulin µg/L"
-)
+AUC_index$Glc_facet <- factor(AUC_index$Glucose, levels = c("Glc_1mM", "Glc_6mM_1st", "Glc_6mM_2nd", "Glc_20mM_1st", "Glc_20mM_2nd", "KCl"))
 
-# Add regression fitting line again
-lines(spline(Ins_Cal$Avg, Ins_Cal$Insulin), col = "red", lwd = 3)
+AUC_Boxplot <- p +
+  geom_boxplot(alpha = .4) +
+  geom_jitter(width = .05, alpha = .4, size = 3) +
+  facet_grid(cols = vars(Glc_facet)) +
+  guides(fill = "none") +
+  theme_classic() +
+  labs(x = NULL, y = "Area under the curve") +
+  theme(axis.text.x = element_text(size = 8, face = "bold"))
 
-# Calulate final insulin value --------------------------------------------
+ggsave(here::here("doc/AUC_Boxplot.png"), AUC_Boxplot)
 
-# Multiply dilution factor
-Ins_Spl_v3 <- Ins_Spl_v3 %>%
-  mutate(Dil_Ins = if_else(Minute >= 32, spline_Ins * 20, spline_Ins * 5))
+write.csv(AUC_index, "data/AUC_index_v2_facet.csv")
 
-# Multiply volume to get insulin ng per min
-Ins_Spl_v3 <- Ins_Spl_v3 %>%
-  mutate(Insulin_ng = Dil_Ins * Vol.per.well.ml)
+# Dot plot to compare
+Ins_rm_1493_1483$Glc_facet <- factor(Ins_rm_1493_1483$Glucose, levels = c("Glc_1mM", "Glc_6mM_1st", "Glc_6mM_2nd", "Glc_20mM_1st", "Glc_20mM_2nd", "KCl"))
 
-# Add glucose value to data set
-Ins_Spl_v3 <- Ins_Spl_v3 %>%
-  mutate(Group = if_else(Minute <= 4, "1mM",
-    if_else(Minute <= 17, "6mM",
-      if_else(Minute <= 32, "20mM", "KCl")
-    )
-  ))
-
-# Save calculated file
-write.csv(Ins_Spl_v3, "data/Ins_Spl_v3.csv")
-
-# Visualization of insulin secretion --------------------------------------
-# Dotplot with line
-dotplot <- Ins_Spl_v3 %>% ggplot(aes(x = Minute, y = Insulin_ng, color = ID, group = ID))
+dotplot <- Ins_rm_1493_1483 %>% 
+  ggplot(aes(x = Minute, y = Insulin_ng, color = ID, group = ID))
 
 dotplot_line <- dotplot +
   geom_point() + geom_line() +
-  facet_grid(cols = vars(Diet)) +
+  facet_grid(Diet ~ Glc_facet) +
   theme_classic() +
-  labs(y = "Insulin (ng/minute)") +
-  scale_x_continuous(breaks = seq(0, 40, 5))
+  labs(y = "Insulin (ng/minute)")
 
-# Save plot
-ggsave(here::here("doc/secretion_ID.png"), dotplot_line, width = 7, height = 5)
+ggsave(here::here("doc/secretion_phase.png"), dotplot_line)
 
-# SI Index ----------------------------------------------------------------
-
-# FInd max value
-SI_index <- Ins_Spl_v3 %>%
-  group_by(ID, Group) %>%
-  summarise(Peak = max(Insulin_ng, na.rm = TRUE))
-
-View(SI_index)
-
-# Save SI index file
-write.csv(SI_index, "data/SI_index.csv")
-
-# Chnage from long to wide form
-SI_index_v2 <- SI_index %>%
-  spread(key = Group, value = Peak)
-
-View(SI_index_v2)
-
-# Calulate stimulation index by peak value of 20 mM and 6 mM
-SI_index_v2 <- SI_index_v2 %>%
-  mutate(Index = `20mM` / `6mM`)
-
-# Save SI index file
-write.csv(SI_index_v2, "data/SI_index_v2.csv")
-
-# AUC ---------------------------------------------------------------------
+write.csv(Ins_rm_1493_1483, "data/Ins_rm_1493_1483_facet.csv")
 

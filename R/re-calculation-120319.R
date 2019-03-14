@@ -63,6 +63,7 @@ dotplot_line <- dotplot +
   scale_x_continuous(breaks = seq(0, 40, 5))
 
 dotplot_line
+
 # Save plot
 ggsave(here::here("doc/secretion_ID.png"), dotplot_line, width = 7, height = 5)
 
@@ -145,6 +146,4 @@ barplot(c(
   mean(AUC_index_v2[ AUC_index_v2$Diet == "Chow","KCl"]),
   mean(AUC_index_v2[ AUC_index_v2$Diet == "2d HFD","KCl"]),
   mean(AUC_index_v2[ AUC_index_v2$Diet == "1wk HFD","KCl"])), ylim=c(0,50), names=c("Chow","2D","7D"), main="KCl")
-
-
 
