@@ -51,7 +51,7 @@ dotplot_line
 ggsave(here::here("doc/secretion_ID.png"), dotplot_line, width = 7, height = 5)
 
 # Check which mouse to remove in Chow
-p1 <- Ins_Conc_v3 %>% 
+p1 <- Ins_Conc_v3 %>%
   filter(Diet == "Chow") %>%
   ggplot(aes(x = Minute, y = Insulin_ng, color = ID, group = ID))
 
@@ -67,7 +67,7 @@ plot_chow
 ggsave(here::here("doc/plot_chow.png"), plot_chow, width = 7, height = 5)
 
 # Check which mouse to remove in 2d HFD
-p2 <- Ins_Conc_v3 %>% 
+p2 <- Ins_Conc_v3 %>%
   filter(Diet == "2d HFD") %>%
   ggplot(aes(x = Minute, y = Insulin_ng, color = ID, group = ID))
 
@@ -83,7 +83,7 @@ plot_2d_hfd
 ggsave(here::here("doc/plot_2d_HFD.png"), plot_2d_hfd, width = 7, height = 5)
 
 # Check which mouse to remove in 1wk HFD
-p3 <- Ins_Conc_v3 %>% 
+p3 <- Ins_Conc_v3 %>%
   filter(Diet == "1wk HFD") %>%
   ggplot(aes(x = Minute, y = Insulin_ng, color = ID, group = ID))
 
@@ -107,3 +107,38 @@ head(Ins_rm_1493_1483)
 
 # Save calculated file
 write.csv(Ins_rm_1493_1483, "data/Ins_rm_1493_1483.csv")
+
+# Line plot with error bars -----------------------------------------------
+# Open data set
+Ins_Conc <- read.csv("~/assay_calculation/data/Ins_rm_1493_1483.csv", row.names = 1, stringsAsFactors = FALSE)
+View(Ins_Conc)
+
+# Calculate N, mean, and sd
+Ins_Stat <- Ins_Conc %>%
+  group_by(Diet, Minute) %>%
+  summarise(
+    N = length(ID),
+    average = mean(Insulin_ng, na.rm = TRUE),
+    sd = sd(Insulin_ng, na.rm = TRUE)
+  )
+
+View(Ins_Stat)
+
+# Calculate se
+Ins_Stat$se <- Ins_Stat$sd / sqrt(Ins_Stat$N)
+
+write.csv(Ins_Stat, "data/Ins_Stat.csv")
+
+# Line plot
+lineplot <- Ins_Stat %>%
+  ggplot(aes(x = Minute, y = average, color = Diet, group = Diet))
+
+lineplot_se <- lineplot +
+  geom_point() + geom_line() +
+  geom_errorbar(aes(ymin = average - se, ymax = average + se), width = .4) +
+  theme_classic() +
+  labs(y = "Insulin (ng/minute)") +
+  scale_x_continuous(breaks = seq(0, 40, 5))
+
+ggsave(here::here("doc/Ins_stat.png"), lineplot_se, width = 7, height = 5)
+

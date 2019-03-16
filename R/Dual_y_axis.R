@@ -1,49 +1,61 @@
 library(tidyverse)
 
 # Open data sets
-Ins_Conc <- read.csv("~/assay_calculation/data/Ins_rm_1493_1483_facet.csv", row.names = 1, stringsAsFactors = FALSE)
-head(Ins_Conc)
+Ins_Conc <- read.csv("~/assay_calculation/data/Ins_Concentration.csv", row.names=1, stringsAsFactors=FALSE)
+Gcg_Conc <- read.csv("~/assay_calculation/data/Gcg_Concentration.csv", row.names=1, stringsAsFactors=FALSE)
 
-Gcg_Conc <- read.csv("~/assay_calculation/data/Gcg_rm_1493_1483_facet.csv", row.names = 1, stringsAsFactors = FALSE)
-head(Gcg_Conc)
+# Combine the Ins_Conc and Gcg_Conc together
+Ins_Conc_v2 <- Ins_Conc %>%
+  select(Diet, ID, Minute, Insulin_ng)
 
-# Extract data of mouse 1433
-Ins_1433 <- Ins_Conc %>%
-  filter(ID == 1433)
+Gcg_Conc_v2 <- Gcg_Conc %>%
+  select(ID, Minute, Glucagon_ng)
 
-Gcg_1433 <- Gcg_Conc %>%
-  filter(ID == 1433)
+Ins_n_Gcg <- merge(Ins_Conc_v2, Gcg_Conc_v2, by = c("ID", "Minute"))
 
-# Plot insulin data
-# Set margins
+View(Ins_n_Gcg)
+
+write.csv(Ins_n_Gcg, "data/Combine_Ins_Gcg.csv")
+
+# Loop to create multiple graphs ------------------------------------------
+# Set plot margins
 par(mar = c(4, 4, 3, 4))
 
-plot(Ins_1433$Minute, Ins_1433$Insulin_ng,
-  col = "darkgreen", type = "b", pch = 16,
-  xaxt='n', xlab = "", 
-  ylab = "ng/minute", ylim = c(0, 40), 
-  lwd = 2, las = 2
-)
+for (i in unique(Ins_n_Gcg$ID)) {
 
-axis(side = 1, at = c(seq(from = 0,to = 40, by = 5)))
+  # subset data according to ID
+  df <- subset(Ins_n_Gcg, Ins_n_Gcg$ID == i)
 
-# Overlay new plot
-par(new = TRUE)
+  # order the data frame by Minute
+  df <- df[order(df$Minute), ]
 
-# Plot glucagon data
-plot(Ins_1433$Minute, Gcg_1433$Glucagon_ng,
-  col = "red", type = "b", lwd = 2, pch = 16,
-  axes = FALSE, xlab = "Minute", ylab = "",
-  main = "Mouse 1433, chow"
-)
+  # dotplot with line
+  plot(df$Minute, df$Insulin_ng,
+    col = "darkgreen", type = "o", pch = 16,
+    xaxt = "n", xlab = "",
+    ylab = "ng/minute", ylim = c(0, 40), las = 2
+  )
 
-# Move the y-axis to the side
-axis(side = 4, las = 2)
+  axis(side = 1, at = c(seq(from = 0, to = 40, by = 5)))
 
-# Add legend
-legend("topleft", c("Insulin", "Glucagon"),
-  col = c("darkgreen", "red"),
-  lty = c(1, 1), lwd = 2
-)
+  # Overlay new plot
+  par(new = TRUE)
 
+  # Plot glucagon data
+  plot(df$Minute, df$Glucagon_ng,
+    col = "red", type = "o", pch = 16,
+    axes = FALSE, xlab = "Minute", ylab = "",
+    main = paste("ID", i, unique(df$Diet))
+  )
 
+  # Move the y-axis to the side
+  axis(side = 4, las = 2)
+
+  # Add legend
+  legend("topleft", c("Insulin", "Glucagon"),
+    col = c("darkgreen", "red"),
+    lty = c(1, 1), lwd = 2
+  )
+}
+
+# Save plots by clicking "Export"
