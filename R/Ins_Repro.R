@@ -1,6 +1,5 @@
 # Open the script package-loading.R and load all the packages
 
-# Does recovery rate have an impact on AUC --------------------------------
 # Open raw data
 Ins_rm_1493_1483 <- read.csv("~/assay_calculation/data/Ins_rm_1493_1483.csv", row.names = 1, stringsAsFactors = FALSE)
 View(Ins_rm_1493_1483)
