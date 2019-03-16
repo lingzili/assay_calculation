@@ -1,22 +1,29 @@
 # Calculate area under the curve
-AUC_index <- Ins_rm_1493_1483 %>%
+AUC_index <- Gcg_rm_1493_1483 %>%
   group_by(ID, Glucose) %>%
-  summarise(AUC = AUC(y = Insulin_ng, x = Minute))
+  summarise(AUC = AUC(y = Glucagon_ng, x = Minute))
 
 View(AUC_index)
 
 AUC_index <- as.data.frame(AUC_index)
 
 # Add Diet to AUC data set
-AUC_index <- merge(AUC_index, df_Diet_ID_v2[, c("ID", "Diet")], by = "ID")
+Diet_ID <- read.csv("~/assay_calculation/data/Diet_ID.csv", row.names = 1, stringsAsFactors = FALSE)
 
-write.csv(AUC_index, "data/AUC_index.csv")
+AUC_index_2 <- merge(AUC_index, Diet_ID[, c("ID", "Diet")], by = "ID")
+
+View(AUC_index_2)
+
+write.csv(AUC_index_2, "data/Gcg_AUC_index.csv")
 
 # Boxplot with points
-p <- AUC_index %>%
-  ggplot(aes(x = Diet, y = AUC, group = Diet, fill = Diet))
+# Order column Glucose
+AUC_index_2$Glc_facet <- factor(AUC_index_2$Glucose, levels = c("Glc_1mM", "Glc_6mM", "Glc_20mM", "KCl"))
 
-AUC_index$Glc_facet <- factor(AUC_index$Glucose, levels = c("Glc_1mM", "Glc_6mM_1st", "Glc_6mM_2nd", "Glc_20mM_1st", "Glc_20mM_2nd", "KCl"))
+write.csv(AUC_index_2, "data/Gcg_AUC_index_facet.csv")
+
+p <- AUC_index_2 %>%
+  ggplot(aes(x = Diet, y = AUC, group = Diet, fill = Diet))
 
 AUC_Boxplot <- p +
   geom_boxplot(alpha = .4) +
@@ -27,23 +34,24 @@ AUC_Boxplot <- p +
   labs(x = NULL, y = "Area under the curve") +
   theme(axis.text.x = element_text(size = 8, face = "bold"))
 
-ggsave(here::here("doc/AUC_Boxplot.png"), AUC_Boxplot)
+AUC_Boxplot
 
-write.csv(AUC_index, "data/AUC_index_v2_facet.csv")
+ggsave(here::here("doc/Gcg_AUC_Boxplot.png"), AUC_Boxplot)
 
 # Dot plot to compare
-Ins_rm_1493_1483$Glc_facet <- factor(Ins_rm_1493_1483$Glucose, levels = c("Glc_1mM", "Glc_6mM_1st", "Glc_6mM_2nd", "Glc_20mM_1st", "Glc_20mM_2nd", "KCl"))
+Gcg_rm_1493_1483$Glc_facet <- factor(Gcg_rm_1493_1483$Glucose, levels = c("Glc_1mM", "Glc_6mM", "Glc_20mM", "KCl"))
 
-dotplot <- Ins_rm_1493_1483 %>% 
-  ggplot(aes(x = Minute, y = Insulin_ng, color = ID, group = ID))
+dotplot <- Gcg_rm_1493_1483 %>%
+  ggplot(aes(x = Minute, y = Glucagon_ng, color = ID, group = ID))
 
 dotplot_line <- dotplot +
   geom_point() + geom_line() +
   facet_grid(Diet ~ Glc_facet) +
   theme_classic() +
-  labs(y = "Insulin (ng/minute)")
+  labs(y = "Glucagon (ng/minute)")
 
-ggsave(here::here("doc/secretion_phase.png"), dotplot_line)
+dotplot_line
 
-write.csv(Ins_rm_1493_1483, "data/Ins_rm_1493_1483_facet.csv")
+ggsave(here::here("doc/gcg_secretion_phase.png"), dotplot_line)
 
+write.csv(Gcg_rm_1493_1483, "data/Gcg_rm_1493_1483_facet.csv")
