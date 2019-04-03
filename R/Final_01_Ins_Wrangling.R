@@ -70,7 +70,7 @@ write.csv(OD450_v3, "data/OD450_Ins.csv")
 # Remove old data sets from the enviroment
 rm(OD450, OD450_v2, Ins_1485_1480, Ins_Remove)
 
-# Calculate calibration ---------------------------------------------------
+# Tidy up calibration file ------------------------------------------------
 
 # Load data set calibrator
 Cal_Ins <- read.csv("~/assay_calculation/data/Cal_Ins.csv", stringsAsFactors = FALSE)
