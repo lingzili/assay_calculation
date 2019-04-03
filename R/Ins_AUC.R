@@ -47,3 +47,9 @@ ggsave(here::here("doc/secretion_phase.png"), dotplot_line)
 
 write.csv(Ins_rm_1493_1483, "data/Ins_rm_1493_1483_facet.csv")
 
+# Calculate p values of AUC -----------------------------------------------
+
+# Load Ins AUC data
+AUC_index <- read.csv("~/assay_calculation/data/AUC_index.csv", row.names=1, stringsAsFactors=FALSE)
+
+# Create a combination of Glucose categories
