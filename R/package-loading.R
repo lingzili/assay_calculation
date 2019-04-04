@@ -11,3 +11,6 @@ library(DescTools)
 # To use 4 Parameter Logistic model
 library(drc)
 library(purrr)
+
+# Dotplot with mean and SD
+library(Hmisc)
