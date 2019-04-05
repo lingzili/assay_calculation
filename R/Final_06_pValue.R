@@ -36,9 +36,8 @@ Ins_AUC$Glucose <- factor(Ins_AUC$Glucose, levels = c("Glc_1mM", "Glc_6mM_1st", 
 
 Ins_AUC$Diet <- factor(Ins_AUC$Diet, levels = c("Chow", "2d HFD", "1wk HFD"))
 
-# Boxplot with points (remove 1467)
+# Boxplot with points
 Ins_p1 <- Ins_AUC %>%
-  filter(ID != 1467) %>%
   ggplot(aes(x = Diet, y = AUC, fill = Diet))
 
 Ins_p2 <- Ins_p1 +
@@ -52,7 +51,7 @@ Ins_p2 <- Ins_p1 +
 
 Ins_p2
 
-ggsave(here::here("doc/AUC_Ins_rm_1467.png"), Ins_p2)
+ggsave(here::here("doc/Final_AUC_Ins.png"), Ins_p2)
 
 # Glucagon AUC boxplots
 
@@ -61,9 +60,8 @@ Gcg_AUC$Glucose <- factor(Gcg_AUC$Glucose, levels = c("Glc_1mM", "Glc_6mM", "Glc
 
 Gcg_AUC$Diet <- factor(Gcg_AUC$Diet, levels = c("Chow", "2d HFD", "1wk HFD"))
 
-# Boxplot with points (remove 1467)
+# Boxplot with points 
 Gcg_p1 <- Gcg_AUC %>%
-  filter(ID != 1467) %>%
   ggplot(aes(x = Diet, y = AUC, fill = Diet))
 
 Gcg_p2 <- Gcg_p1 +
@@ -77,33 +75,33 @@ Gcg_p2 <- Gcg_p1 +
 
 Gcg_p2
 
-ggsave(here::here("doc/AUC_Gcg_rm_1467.png"), Gcg_p2)
+ggsave(here::here("doc/Final_AUC_Gcg.png"), Gcg_p2)
 
 # ANOVA on AUC ------------------------------------------------------------
 # One-way ANOVA test followed by Tukey multiple pairwise-comparisons
 # Define fitted class with aov
 aov_Ins <- Ins_AUC %>%
-  filter(ID != 1467) %>%
   aov(AUC ~ Diet, data = .)
 
 aov_Gcg <- Gcg_AUC %>%
-  filter(ID != 1467) %>%
   aov(AUC ~ Diet, data = .)
 
 # Calculate ANOVA and TukeyHSD
 Ins_AUC_ANOVA <-
-  append("Insulin ANOVA below, ID 1467 removed", summary(aov_Ins)) %>%
+  append("Insulin ANOVA below", summary(aov_Ins)) %>%
   append(., TukeyHSD(aov_Ins))
 
 Ins_AUC_ANOVA
 
 Gcg_AUC_ANOVA <-
-  append("Glucagon ANOVA below, ID 1467 removed", summary(aov_Gcg)) %>%
+  append("Glucagon ANOVA below", summary(aov_Gcg)) %>%
   append(., TukeyHSD(aov_Gcg))
 
 Gcg_AUC_ANOVA
 
 FinStat_AUC <- append(Ins_AUC_ANOVA, Gcg_AUC_ANOVA)
+
+FinStat_AUC
 
 save(FinStat_AUC, file = "data/FinStat_AUC.RData")
 
@@ -134,22 +132,23 @@ write.csv(SI_Index, "data/Final_SI_Index.csv")
 SI_Index_v2 <- SI_Index[, -(3:8), drop = FALSE] %>%
   gather(Glucose, SI_Index, -ID, -Diet) # Chnage from wide to long
 
+View(SI_Index_v2)
+
 # Remove Index_ from Glucose
-SI_Index_v2$Glucose <- gsub("Index_", "", SI_Index_v2$Glucose)
+SI_Index_v2$Glucose <- gsub("Index", "Glc", SI_Index_v2$Glucose)
 
 # Ranck the order of Glucose and Diet
-SI_Index_v2$Glucose <- factor(SI_Index_v2$Glucose, levels = c("6mM_1st", "6mM_2nd", "20mM_1st", "20mM_2nd"))
+SI_Index_v2$Glucose <- factor(SI_Index_v2$Glucose, levels = c("Glc_6mM_1st", "Glc_6mM_2nd", "Glc_20mM_1st", "Glc_20mM_2nd"))
 
 SI_Index_v2$Diet <- factor(SI_Index_v2$Diet, levels = c("Chow", "2d HFD", "1wk HFD"))
 
 write.csv(SI_Index_v2, "data/Final_SI_Index_long.csv")
 
-# Boxplot with points, ID 1467 removed
+# Boxplot with points for SI index
 SI_plot <- SI_Index_v2 %>%
-  filter(ID != 1467) %>%
   ggplot(aes(x = Diet, y = SI_Index, fill = Diet)) +
   geom_boxplot(alpha = .4) +
-  geom_jitter(width = .05, alpha = .4, size = 3) +
+  geom_jitter(width = .05, alpha = .6, size = 3) +
   facet_grid(cols = vars(Glucose)) +
   guides(fill = "none") +
   theme_classic() +
@@ -157,6 +156,26 @@ SI_plot <- SI_Index_v2 %>%
 
 SI_plot
 
-ggsave(here::here("doc/Final_SI_rm_1467.png"), SI_plot)
+ggsave(here::here("doc/Final_SI.png"), SI_plot)
 
 # ANOVA on stimulation index ----------------------------------------------
+# One-way ANOVA test followed by Tukey multiple pairwise-comparisons
+# Define fitted class with aov
+Fvalue_SI <- SI_Index_v2 %>%
+  split(.$Glucose) %>%
+  map(~summary(aov(SI_Index ~ Diet, data = .))) %>%
+  append("ANOVA on Insulin stimulation index below", .)
+
+Fvalue_SI
+
+Tukey_SI <- SI_Index_v2 %>%
+  split(.$Glucose) %>%
+  map(~TukeyHSD(aov(SI_Index ~ Diet, data = .)))
+
+Tukey_SI
+
+SI_ANOVA <- append(Fvalue_SI, Tukey_SI)
+
+SI_ANOVA
+
+save(SI_ANOVA, file = "data/FinStat_SI.RData")

@@ -98,13 +98,36 @@ Ins_dotplot <- Ins_Conc %>%
 Ins_dotplot_line <- Ins_dotplot +
   geom_point() + geom_line() +
   facet_grid(Diet ~ Glucose) +
-  labs(y = "Insulin (ng/minute)") +
+  labs(y = "Insulin (ng)") +
   theme_classic() +
   scale_fill_brewer(palette = "Dark2")
 
 Ins_dotplot_line
 
 ggsave(here::here("doc/Final_Ins_Phase.png"), Ins_dotplot_line)
+
+# Glucagon
+# Change to character for variable ID
+Gcg_Conc$ID <- as.character(Gcg_Conc$ID)
+
+# Ranck the order of Glucose and Diet
+Gcg_Conc$Glucose <- factor(Gcg_Conc$Glucose, levels = c("Glc_1mM", "Glc_6mM", "Glc_20mM", "KCl"))
+
+Gcg_Conc$Diet <- factor(Gcg_Conc$Diet, levels = c("Chow", "2d HFD", "1wk HFD"))
+
+Gcg_dotplot <- Gcg_Conc %>% 
+  ggplot(aes(x = Minute, y = Glucagon_ng, color = ID))
+
+Gcg_dotplot_line <- Gcg_dotplot +
+  geom_point() + geom_line() +
+  facet_grid(Diet ~ Glucose) +
+  labs(y = "Glucagon (ng)") +
+  theme_classic() +
+  scale_fill_brewer(palette = "Dark2")
+
+Gcg_dotplot_line
+
+ggsave(here::here("doc/Final_Gcg_Phase.png"), Gcg_dotplot_line)
 
 # Plot line graph with mean and SD ----------------------------------------
 
