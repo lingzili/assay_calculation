@@ -81,12 +81,35 @@ for (i in unique(Ins_n_Gcg$ID)) {
 
 # Save plots by clicking "Export"
 
-# Plot line graph with mean and SD ----------------------------------------
-# Remove 1467 Chow from data set
+# Plot each stimulation phase ---------------------------------------------
 
-# Calculate mean and sd without 1467
-FinStat_rm_1467 <- Ins_n_Gcg %>%
-  filter(ID != 1467) %>%
+# Insulin
+# Change to character for variable ID
+Ins_Conc$ID <- as.character(Ins_Conc$ID)
+
+# Ranck the order of Glucose and Diet
+Ins_Conc$Glucose <- factor(Ins_Conc$Glucose, levels = c("Glc_1mM", "Glc_6mM_1st", "Glc_6mM_2nd", "Glc_20mM_1st", "Glc_20mM_2nd", "KCl"))
+
+Ins_Conc$Diet <- factor(Ins_Conc$Diet, levels = c("Chow", "2d HFD", "1wk HFD"))
+
+Ins_dotplot <- Ins_Conc %>% 
+  ggplot(aes(x = Minute, y = Insulin_ng, color = ID))
+
+Ins_dotplot_line <- Ins_dotplot +
+  geom_point() + geom_line() +
+  facet_grid(Diet ~ Glucose) +
+  labs(y = "Insulin (ng/minute)") +
+  theme_classic() +
+  scale_fill_brewer(palette = "Dark2")
+
+Ins_dotplot_line
+
+ggsave(here::here("doc/Final_Ins_Phase.png"), Ins_dotplot_line)
+
+# Plot line graph with mean and SD ----------------------------------------
+
+# Calculate mean and sd 
+FinStat <- Ins_n_Gcg %>%
   group_by(Diet, Minute) %>%
   summarise(
     Avg_Ins = mean(Insulin_ng, na.rm = TRUE),
@@ -95,15 +118,15 @@ FinStat_rm_1467 <- Ins_n_Gcg %>%
     SD_Gcg = sd(Glucagon_ng, na.rm = TRUE)
   )
 
-FinStat_rm_1467
+FinStat
 
 # Create a certain order within Diet
-FinStat_rm_1467$Diet <- factor(FinStat_rm_1467$Diet, levels = c("Chow", "2d HFD", "1wk HFD"))
+FinStat$Diet <- factor(FinStat$Diet, levels = c("Chow", "2d HFD", "1wk HFD"))
 
-write.csv(FinStat_rm_1467, "data/FinStat_rm_1467.csv")
+write.csv(FinStat, "data/Final_Stat.csv")
 
 # Insulin line plot
-Ins_p1 <- FinStat_rm_1467 %>%
+Ins_p1 <- FinStat %>%
   ggplot(aes(x = Minute, y = Avg_Ins, color = Diet))
 
 Ins_p2 <- Ins_p1 +
@@ -119,7 +142,7 @@ Ins_p2
 ggsave(here::here("doc/Final_Ins_stat.png"), Ins_p2)
 
 # Glucagon line plot
-Gcg_p1 <- FinStat_rm_1467 %>%
+Gcg_p1 <- FinStat %>%
   ggplot(aes(x = Minute, y = Avg_Gcg, color = Diet))
 
 Gcg_p2 <- Gcg_p1 +

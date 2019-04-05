@@ -12,6 +12,8 @@ View(OD450_Ins_Tidy)
 Cal_Ins <- read.csv("~/assay_calculation/data/Cal_Ins_v2.csv", row.names = 1, stringsAsFactors = FALSE)
 View(Cal_Ins)
 
+# Inspect calibrators -----------------------------------------------------
+
 # Inspect variations of each calibrator´s OD450 value
 plot_Cal_v1 <- ggplot(Cal_Ins, aes(Calibrator, OD450, fill = ELISA_Date)) +
   geom_bar(stat = "identity", width = .5, position = "dodge") +
