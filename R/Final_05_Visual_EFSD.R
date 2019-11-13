@@ -52,7 +52,7 @@ Ins_p2 <- Ins_p1 +
   geom_errorbar(aes(ymin = Avg_Ins - SEM_Ins, ymax = Avg_Ins + SEM_Ins), size = 1, width = .5) +
   labs(y = "Insulin (ng)") +
   scale_x_continuous(breaks = seq(0, 40, 5)) +
-  scale_y_continuous(breaks = seq(0, 30, 10)) +
+  ylim(0, 30) +
   standard_theme_facet_line
 
 Ins_p2
